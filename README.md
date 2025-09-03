@@ -1,11 +1,14 @@
 # Chrome Lens API for Python
 
-**English** | [Русский](/README_RU.md)
+Now as a standalone version!
 
 [![PyPI version](https://badge.fury.io/py/chrome-lens-py.svg)](https://badge.fury.io/py/chrome-lens-py)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python versions](https://img.shields.io/pypi/pyversions/chrome-lens-py.svg)](https://pypi.org/project/chrome-lens-py)
 [![Downloads](https://static.pepy.tech/badge/chrome-lens-py)](https://pepy.tech/project/chrome-lens-py)
+
+This repo provides a standalone version of the chrome-lens-py package for Windows and Linux.
+
 
 > [!IMPORTANT]
 > **Major Rewrite (Version 3.1.0+)**
