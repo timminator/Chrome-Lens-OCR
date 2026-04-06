@@ -1,9 +1,9 @@
 import json
 import logging
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Optional, cast
 
-from ..constants import APP_NAME_FOR_CONFIG, DEFAULT_CONFIG_FILENAME
+from ..constants import APP_NAME_FOR_CONFIG
 from ..exceptions import LensConfigError
 
 logger = logging.getLogger(__name__)
@@ -17,7 +17,7 @@ def get_default_config_dir(app_name: str = APP_NAME_FOR_CONFIG) -> str:
     return os.path.join(config_dir_base, app_name)
 
 
-def load_config(config_file_path: str) -> Dict[str, Any]:
+def load_config(config_file_path: str) -> dict[str, Any]:
     """
     Loads configuration from a JSON file.
     Returns an empty dictionary if the file is not found.
@@ -25,22 +25,16 @@ def load_config(config_file_path: str) -> Dict[str, Any]:
     """
     if os.path.isfile(config_file_path):
         try:
-            with open(config_file_path, "r", encoding="utf-8") as f:
-                return json.load(f)
+            with open(config_file_path, encoding="utf-8") as f:
+                return cast(dict[str, Any], json.load(f))
         except json.JSONDecodeError as e:
-            raise LensConfigError(
-                f"Error decoding JSON from config file '{config_file_path}': {e}"
-            )
-        except IOError as e:
-            raise LensConfigError(
-                f"I/O error reading config file '{config_file_path}': {e}"
-            )
+            raise LensConfigError(f"Error decoding JSON from config file '{config_file_path}': {e}") from e
+        except OSError as e:
+            raise LensConfigError(f"I/O error reading config file '{config_file_path}': {e}") from e
     return {}
 
 
-def get_effective_config_value(
-    cli_arg_value: Optional[Any], config_file_value: Optional[Any], default_value: Any
-) -> Any:
+def get_effective_config_value(cli_arg_value: Optional[Any], config_file_value: Optional[Any], default_value: Any) -> Any:
     """Determines the effective configuration value. Priority: CLI > Config File > Default."""
     if cli_arg_value is not None:
         return cli_arg_value
@@ -49,9 +43,7 @@ def get_effective_config_value(
     return default_value
 
 
-def build_app_config(
-    cli_args: Optional[Dict[str, Any]] = None, config_file_path: Optional[str] = None
-) -> Dict[str, Any]:
+def build_app_config(cli_args: Optional[dict[str, Any]] = None, config_file_path: Optional[str] = None) -> dict[str, Any]:
     """
     Builds the final application config by merging values from CLI args and a config file.
     """
@@ -73,9 +65,7 @@ def build_app_config(
     )
 
     final_config = {
-        "api_key": get_effective_config_value(
-            cli.get("api_key"), loaded_config.get("api_key"), DEFAULT_API_KEY
-        ),
+        "api_key": get_effective_config_value(cli.get("api_key"), loaded_config.get("api_key"), DEFAULT_API_KEY),
         "client_region": get_effective_config_value(
             cli.get("client_region"),
             loaded_config.get("client_region"),
@@ -86,32 +76,9 @@ def build_app_config(
             loaded_config.get("client_time_zone"),
             DEFAULT_CLIENT_TIME_ZONE,
         ),
-        "proxy": get_effective_config_value(
-            cli.get("proxy"), loaded_config.get("proxy"), None
-        ),
-        "timeout": int(
-            get_effective_config_value(
-                cli.get("timeout"), loaded_config.get("timeout"), 60
-            )
-        ),
-        "font_path": get_effective_config_value(
-            cli.get("font_path"), loaded_config.get("font_path"), None
-        ),
-        "font_size": (
-            int(
-                get_effective_config_value(
-                    cli.get("font_size"), loaded_config.get("font_size"), 20
-                )
-            )
-            if get_effective_config_value(
-                cli.get("font_size"), loaded_config.get("font_size"), None
-            )
-            is not None
-            else None
-        ),
-        "logging_level": get_effective_config_value(
-            cli.get("logging_level"), loaded_config.get("logging_level"), "WARNING"
-        ).upper(),
+        "proxy": get_effective_config_value(cli.get("proxy"), loaded_config.get("proxy"), None),
+        "timeout": int(get_effective_config_value(cli.get("timeout"), loaded_config.get("timeout"), 60)),
+        "logging_level": get_effective_config_value(cli.get("logging_level"), loaded_config.get("logging_level"), "WARNING").upper(),
         "ocr_preserve_line_breaks": get_effective_config_value(
             cli.get("ocr_preserve_line_breaks"),
             loaded_config.get("ocr_preserve_line_breaks"),
@@ -121,7 +88,7 @@ def build_app_config(
     return final_config
 
 
-def update_config_file_from_cli(cli_args: Dict[str, Any], config_file_path: str):
+def update_config_file_from_cli(cli_args: dict[str, Any], config_file_path: str) -> None:
     """Updates the config file with values from CLI args (only safe fields)."""
     current_config = load_config(config_file_path)
 
@@ -130,8 +97,6 @@ def update_config_file_from_cli(cli_args: Dict[str, Any], config_file_path: str)
         "client_time_zone",
         "proxy",
         "timeout",
-        "font_path",
-        "font_size",
         "logging_level",
         "ocr_preserve_line_breaks",
     ]
@@ -153,5 +118,5 @@ def update_config_file_from_cli(cli_args: Dict[str, Any], config_file_path: str)
         with open(config_file_path, "w", encoding="utf-8") as f:
             json.dump(current_config, f, indent=4, ensure_ascii=False)
         logging.info(f"Configuration file updated: {config_file_path}")
-    except (IOError, TypeError) as e:
-        raise LensConfigError(f"Error saving config file '{config_file_path}': {e}")
+    except (OSError, TypeError) as e:
+        raise LensConfigError(f"Error saving config file '{config_file_path}': {e}") from e

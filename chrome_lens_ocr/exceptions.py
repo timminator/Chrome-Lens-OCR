@@ -1,3 +1,6 @@
+from typing import Optional
+
+
 class LensException(Exception):
     """Base class for exceptions of this library."""
 
@@ -7,12 +10,12 @@ class LensException(Exception):
 class LensAPIError(LensException):
     """Exception for errors related to HTTP requests to the Lens API."""
 
-    def __init__(self, message, status_code=None, response_body=None):
+    def __init__(self, message: str, status_code: Optional[int] = None, response_body: Optional[str] = None) -> None:
         super().__init__(message)
         self.status_code = status_code
         self.response_body = response_body
 
-    def __str__(self):
+    def __str__(self) -> str:
         msg = super().__str__()
         if self.status_code:
             msg += f" (Status Code: {self.status_code})"
@@ -33,13 +36,9 @@ class LensImageError(LensException):
 class LensProtobufError(LensException):
     """Exception for errors related to the creation or parsing of Protobuf messages."""
 
-    pass
-
-
-class LensFontError(LensException):
-    """Exception for font-related errors."""
-
-    pass
+    def __init__(self, message: str, response_body: Optional[str] = None) -> None:
+        super().__init__(message)
+        self.response_body = response_body
 
 
 class LensConfigError(LensException):

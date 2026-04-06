@@ -1,9 +1,0 @@
-requests
-Pillow
-filetype
-json5
-PySocks
-httpx[socks]
-numpy
-rich
-betterproto >= 2.0.0b6

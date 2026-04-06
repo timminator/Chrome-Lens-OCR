@@ -1,1 +1,0 @@
-The folder is just for experimentation, testing old, new methods. Stupid ideas, etc.

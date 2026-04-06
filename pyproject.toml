@@ -1,0 +1,77 @@
+[build-system]
+requires = ["setuptools>=77.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "Chrome-Lens-OCR"
+dynamic = ["version"]
+description = "Library for Google Lens OCR and Translation using the crupload endpoint."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+keywords = ["ocr", "ocr-recognition"]
+authors = [
+    {name = "Bropines", email = "bropines@gmail.com"},
+    {name = "Tim Lodemann"}
+]
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Image Recognition",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Intended Audience :: Developers",
+]
+dependencies = [
+    "httpx[socks]>=0.20",
+    "Pillow>=9.0",
+    "betterproto>=2.0.0b6",
+]
+
+[dependency-groups]
+dev = [
+    "mypy",
+    "pre-commit",
+    "ruff",
+]
+build = [
+    "nuitka",
+    "requests",
+]
+all = [
+    { include-group = "dev" },
+    { include-group = "build" },
+]
+
+[project.urls]
+Homepage = "https://github.com/timminator/Chrome-Lens-OCR"
+documentation = "https://github.com/timminator/Chrome-Lens-OCR/blob/master/README.md"
+Repository = "https://github.com/timminator/Chrome-Lens-OCR.git"
+Issues = "https://github.com/timminator/Chrome-Lens-OCR/issues"
+
+[tool.mypy]
+strict = true
+exclude = ["build"]
+
+[tool.setuptools]
+packages = []
+
+[tool.setuptools.dynamic]
+version = { attr = "_version.__version__" }
+
+[tool.ruff]
+exclude = ["build", "venv", ".venv", "__pycache__",
+    # Exclude auto-generated file
+    "chrome_lens_ocr/utils/lens_betterproto.py",
+]
+preview = true
+target-version = "py39"
+line-length = 140
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "W"]
+ignore = ["E501", "SIM108", "SIM102", "SIM114"]
