@@ -14,4 +14,4 @@ repos:
         pass_filenames: false
         language: system
         types: [python]
-        args: ["--config-file=pyproject.toml"]
+        args: ["--config-file=pyproject.toml", "--exclude=(^|/)chrome_lens_ocr/utils/protobufs/.*\\.py$"]
