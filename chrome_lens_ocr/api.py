@@ -21,7 +21,7 @@ from .core.request_handler import LensRequestHandler
 from .exceptions import LensException
 
 if TYPE_CHECKING:
-    from .utils.lens_betterproto import (
+    from .utils.lens_betterproto import (  # type: ignore[attr-defined]
         LensOverlayServerResponse,
         TextLayoutLine,
         TextLayoutParagraph,
