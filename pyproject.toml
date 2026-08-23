@@ -29,7 +29,7 @@ classifiers = [
 dependencies = [
     "httpx[socks]>=0.20",
     "Pillow>=9.0",
-    "betterproto>=2.0.0b6",
+    "protobuf>=6.33.4",
 ]
 
 [dependency-groups]
@@ -65,8 +65,8 @@ version = { attr = "_version.__version__" }
 
 [tool.ruff]
 exclude = ["build", "venv", ".venv", "__pycache__",
-    # Exclude auto-generated file
     "chrome_lens_ocr/utils/lens_betterproto.py",
+    "chrome_lens_ocr/utils/protobufs",
 ]
 preview = true
 target-version = "py39"
