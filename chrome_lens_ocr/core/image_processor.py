@@ -28,7 +28,7 @@ async def _get_raw_bytes_from_source(image_source: str) -> bytes:
             async with httpx.AsyncClient(timeout=30) as client:
                 response = await client.get(image_source, follow_redirects=True)
                 response.raise_for_status()
-            return response.content
+            return response.content  # type: ignore[no-any-return]
         except httpx.RequestError as e:
             raise LensImageError(f"Network error downloading URL '{image_source}': {e}") from e
         except Exception as e:
