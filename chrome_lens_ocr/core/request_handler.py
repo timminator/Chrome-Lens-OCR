@@ -8,7 +8,7 @@ from ..constants import DEFAULT_HEADERS, LENS_CRUPLOAD_ENDPOINT
 from ..exceptions import LensAPIError, LensProtobufError
 
 if TYPE_CHECKING:
-    from ..utils.lens_betterproto import LensOverlayClusterInfo, LensOverlayServerResponse
+    from ..utils.lens_betterproto import LensOverlayClusterInfo, LensOverlayServerResponse  # type: ignore[attr-defined]
 else:
     from ..utils.lens_betterproto import LensOverlayClusterInfo, LensOverlayServerResponse
 
@@ -16,13 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 class LensRequestHandler:
-    def __init__(
-        self,
-        api_key: str,
-        proxy: Optional[Union[str, dict[str, httpx.AsyncBaseTransport]]] = None,
-        timeout: int = 60,
-        max_retries: int = 3,
-    ):
+    def __init__(self, api_key: str, proxy: Optional[Union[str, dict[str, httpx.AsyncBaseTransport]]] = None, timeout: int = 60, max_retries: int = 3):
         self.api_key = api_key
         self.proxy_settings: dict[str, Any] = {}
         self.timeout = timeout
@@ -87,7 +81,6 @@ class LensRequestHandler:
                 response_bytes = await response.aread()
                 response.raise_for_status()
                 logger.debug(f"Response content length: {len(response_bytes)} bytes.")
-
                 server_response_proto = LensOverlayServerResponse.FromString(response_bytes)
 
                 if server_response_proto.HasField("error") and server_response_proto.error.error_type != 0:
