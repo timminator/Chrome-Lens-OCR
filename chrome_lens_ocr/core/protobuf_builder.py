@@ -1,24 +1,13 @@
 import logging
 import random
-from typing import Optional, cast
+from typing import Optional
 
 from ..constants import DEFAULT_CLIENT_REGION, DEFAULT_CLIENT_TIME_ZONE, DEFAULT_OCR_LANG
 from ..exceptions import LensProtobufError
 from ..utils.lens_betterproto import (
-    AppliedFilter,
-    AppliedFilters,
-    AppliedFilterTranslate,
-    ImageData,
-    ImageMetadata,
-    ImagePayload,
-    LensOverlayClientContext,
     LensOverlayFilterType,
-    LensOverlayObjectsRequest,
-    LensOverlayRequestContext,
-    LensOverlayRequestId,
     LensOverlayRoutingInfo,
     LensOverlayServerRequest,
-    LocaleContext,
     Platform,
     Surface,
 )
