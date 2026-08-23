@@ -1,0 +1,69 @@
+name: Apply final protobuf build fixes
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: protobuf-migration
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Apply fixes and run Ruff
+        shell: bash
+        run: |
+          set -euo pipefail
+          sed -i '/nuitka-project: --include-package=chrome_lens_ocr\.utils\.protobufs/d' chrome_lens_ocr.py
+          python - <<'PY'
+          from pathlib import Path
+          p = Path("build.py")
+          text = p.read_text()
+          text = text.replace("import argparse\nimport shutil", "import argparse\nimport os\nimport shutil", 1)
+          text = text.replace(
+              "def run_command(command: list[str], cwd: Optional[Union[str, Path]] = None) -> None:",
+              "def run_command(command: list[str], cwd: Optional[Union[str, Path]] = None, env: Optional[dict] = None) -> None:",
+              1,
+          )
+          text = text.replace(
+              "subprocess.run(command, check=True, cwd=cwd)",
+              "subprocess.run(command, check=True, cwd=cwd, env=env)",
+              1,
+          )
+          old = '    # Nuitka compilation\n    run_command([sys.executable, "-m", "nuitka", "chrome_lens_ocr.py"])'
+          new = '''    # Prepend protobufs folder to PYTHONPATH for Nuitka to resolve absolute imports
+          nuitka_env = os.environ.copy()
+          protobufs_dir = Path("chrome_lens_ocr/utils/protobufs").absolute()
+
+          if "PYTHONPATH" in nuitka_env:
+              nuitka_env["PYTHONPATH"] = f"{protobufs_dir}{os.pathsep}{nuitka_env['PYTHONPATH']}"
+          else:
+              nuitka_env["PYTHONPATH"] = str(protobufs_dir)
+
+          run_command(
+              [sys.executable, "-m", "nuitka", "chrome_lens_ocr.py"],
+              env=nuitka_env,
+          )'''
+          if old not in text:
+              raise SystemExit("Expected Nuitka invocation not found in build.py")
+          p.write_text(text.replace(old, new, 1))
+
+          p = Path("chrome_lens_ocr/core/image_processor.py")
+          text = p.read_text()
+          text = text.replace("                return response.content", "                return bytes(response.content)", 1)
+          p.write_text(text)
+          PY
+          pip install -e . --group dev
+          ruff check . --fix
+          ruff format .
+          git rm .github/workflows/apply-final-fixes.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Fix Nuitka protobuf discovery and Ruff formatting"
+          git push origin HEAD:protobuf-migration
