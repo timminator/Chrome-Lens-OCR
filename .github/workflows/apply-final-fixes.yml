@@ -1,6 +1,9 @@
 name: Apply final protobuf build fixes
 
 on:
+  push:
+    branches:
+      - protobuf-migration
   workflow_dispatch:
 
 permissions:
@@ -8,6 +11,7 @@ permissions:
 
 jobs:
   fix:
+    if: github.event_name == 'workflow_dispatch' || github.event.head_commit.message != 'Fix Nuitka protobuf discovery and Ruff formatting'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -61,7 +65,6 @@ jobs:
           pip install -e . --group dev
           ruff check . --fix
           ruff format .
-          git rm .github/workflows/apply-final-fixes.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
