@@ -23,13 +23,13 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Operating System :: OS Independent",
     "Topic :: Scientific/Engineering :: Image Recognition",
-    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Libraries",
     "Intended Audience :: Developers",
 ]
 dependencies = [
     "httpx[socks]>=0.20",
     "Pillow>=9.0",
-    "betterproto>=2.0.0b6",
+    "protobuf>=6.33.4",
 ]
 
 [dependency-groups]
@@ -55,7 +55,11 @@ Issues = "https://github.com/timminator/Chrome-Lens-OCR/issues"
 
 [tool.mypy]
 strict = true
-exclude = ["build"]
+exclude = [
+    "build",
+    "chrome_lens_ocr/utils/protobufs",
+]
+follow_imports = "skip"
 
 [tool.setuptools]
 packages = []
@@ -65,8 +69,8 @@ version = { attr = "_version.__version__" }
 
 [tool.ruff]
 exclude = ["build", "venv", ".venv", "__pycache__",
-    # Exclude auto-generated file
     "chrome_lens_ocr/utils/lens_betterproto.py",
+    "chrome_lens_ocr/utils/protobufs",
 ]
 preview = true
 target-version = "py39"

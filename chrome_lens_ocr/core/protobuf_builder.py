@@ -1,51 +1,16 @@
 import logging
 import random
-from typing import TYPE_CHECKING, Optional, cast
+from typing import Optional
 
-from ..constants import (
-    DEFAULT_CLIENT_REGION,
-    DEFAULT_CLIENT_TIME_ZONE,
-)
+from ..constants import DEFAULT_CLIENT_REGION, DEFAULT_CLIENT_TIME_ZONE, DEFAULT_OCR_LANG
 from ..exceptions import LensProtobufError
-
-if TYPE_CHECKING:
-    from ..utils.lens_betterproto import (
-        AppliedFilter,
-        AppliedFilters,
-        AppliedFilterTranslate,
-        ImageData,
-        ImageMetadata,
-        ImagePayload,
-        LensOverlayClientContext,
-        LensOverlayFilterType,
-        LensOverlayObjectsRequest,
-        LensOverlayRequestContext,
-        LensOverlayRequestId,
-        LensOverlayRoutingInfo,
-        LensOverlayServerRequest,
-        LocaleContext,
-        Platform,
-        Surface,
-    )
-else:
-    from ..utils.lens_betterproto import (
-        AppliedFilter,
-        AppliedFilters,
-        AppliedFilterTranslate,
-        ImageData,
-        ImageMetadata,
-        ImagePayload,
-        LensOverlayClientContext,
-        LensOverlayFilterType,
-        LensOverlayObjectsRequest,
-        LensOverlayRequestContext,
-        LensOverlayRequestId,
-        LensOverlayRoutingInfo,
-        LensOverlayServerRequest,
-        LocaleContext,
-        Platform,
-        Surface,
-    )
+from ..utils.lens_betterproto import (
+    LensOverlayFilterType,
+    LensOverlayRoutingInfo,
+    LensOverlayServerRequest,
+    Platform,
+    Surface,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -62,60 +27,40 @@ def create_ocr_translate_request(
     session_uuid: Optional[int] = None,
     sequence_id: int = 1,
     image_sequence_id: int = 1,
-    routing_info: Optional["LensOverlayRoutingInfo"] = None,
+    routing_info: Optional[LensOverlayRoutingInfo] = None,
 ) -> tuple[bytes, int]:
     try:
         server_request = LensOverlayServerRequest()
-        objects_request = LensOverlayObjectsRequest()
-        request_context = LensOverlayRequestContext()
+        objects_req = server_request.objects_request
+        req_ctx = objects_req.request_context
 
         uuid_to_use = session_uuid if session_uuid is not None else random.randint(0, (1 << 63) - 1)
-        if session_uuid is None:
-            logger.debug(f"ProtobufBuilder: No session_uuid provided, generated new one: {uuid_to_use}")
-        else:
-            logger.debug(f"ProtobufBuilder: Using provided session_uuid: {uuid_to_use}")
-
-        request_id_obj = LensOverlayRequestId(
-            uuid=uuid_to_use,
-            sequence_id=sequence_id,
-            image_sequence_id=image_sequence_id,
-        )
+        req_ctx.request_id.uuid = uuid_to_use
+        req_ctx.request_id.sequence_id = sequence_id
+        req_ctx.request_id.image_sequence_id = image_sequence_id
         if routing_info:
-            request_id_obj.routing_info = routing_info
-        request_context.request_id = request_id_obj
+            req_ctx.request_id.routing_info.CopyFrom(routing_info)
 
-        effective_client_region = client_region if client_region is not None else DEFAULT_CLIENT_REGION
-        effective_client_time_zone = client_time_zone if client_time_zone is not None else DEFAULT_CLIENT_TIME_ZONE
-
-        locale_ctx = LocaleContext(
-            language=ocr_language,
-            region=effective_client_region,
-            time_zone=effective_client_time_zone,
-        )
-        client_ctx = LensOverlayClientContext(
-            platform=cast(Platform, Platform.WEB), surface=cast(Surface, Surface.CHROMIUM), locale_context=locale_ctx
-        )
+        client_ctx = req_ctx.client_context
+        client_ctx.platform = Platform.PLATFORM_WEB
+        client_ctx.surface = Surface.SURFACE_CHROMIUM
+        client_ctx.locale_context.language = ocr_language or DEFAULT_OCR_LANG
+        client_ctx.locale_context.region = client_region or DEFAULT_CLIENT_REGION
+        client_ctx.locale_context.time_zone = client_time_zone or DEFAULT_CLIENT_TIME_ZONE
 
         if target_translation_language:
-            translate_options = AppliedFilterTranslate(target_language=target_translation_language)
+            filter_obj = client_ctx.client_filters.filter.add()
+            filter_obj.filter_type = LensOverlayFilterType.TRANSLATE
+            filter_obj.translate.target_language = target_translation_language
             if source_translation_language:
-                translate_options.source_language = source_translation_language
+                filter_obj.translate.source_language = source_translation_language
 
-            applied_filter_translate = AppliedFilter(
-                filter_type=cast(LensOverlayFilterType, LensOverlayFilterType.TRANSLATE), translate=translate_options
-            )
-            client_ctx.client_filters = AppliedFilters(filter=[applied_filter_translate])
+        img_data = objects_req.image_data
+        img_data.payload.image_bytes = image_bytes
+        img_data.image_metadata.width = width
+        img_data.image_metadata.height = height
 
-        request_context.client_context = client_ctx
-        objects_request.request_context = request_context
-
-        image_payload_obj = ImagePayload(image_bytes=image_bytes)
-        image_metadata_obj = ImageMetadata(width=width, height=height)
-        image_data_obj = ImageData(payload=image_payload_obj, image_metadata=image_metadata_obj)
-        objects_request.image_data = image_data_obj
-        server_request.objects_request = objects_request
-
-        protobuf_payload_bytes = bytes(server_request)
+        protobuf_payload_bytes = server_request.SerializeToString()
         logger.debug(
             "Protobuf request created. UUID: %s, SeqID: %s, ImgSeqID: %s, Size: %d bytes.",
             uuid_to_use,
@@ -124,10 +69,6 @@ def create_ocr_translate_request(
             len(protobuf_payload_bytes),
         )
         return protobuf_payload_bytes, uuid_to_use
-
-    except TypeError as te:
-        logger.error(f"TypeError during Protobuf request creation: {te}", exc_info=True)
-        raise LensProtobufError(f"Type error when creating a Protobuf request: {te}") from te
     except Exception as e:
         logger.error(f"Error creating Protobuf request: {e}", exc_info=True)
-        raise LensProtobufError(f"Error while creating Protobuf request: {e}") from e
+        raise LensProtobufError(f"Error while creating a Protobuf request: {e}") from e
