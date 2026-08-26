@@ -1,4 +1,5 @@
 import argparse
+import os
 import shutil
 import subprocess
 import sys
@@ -29,11 +30,11 @@ def check_7zip() -> None:
     print("7-Zip found.")
 
 
-def run_command(command: list[str], cwd: Optional[Union[str, Path]] = None) -> None:
+def run_command(command: list[str], cwd: Optional[Union[str, Path]] = None, env: Optional[dict] = None) -> None:
     """Runs a command in the shell, streams its output, and exits if it fails."""
     try:
         print(f"\nRunning command: {' '.join(command)}" + (f" in '{cwd}'" if cwd else ""))
-        subprocess.run(command, check=True, cwd=cwd)
+        subprocess.run(command, check=True, cwd=cwd, env=env)
     except subprocess.CalledProcessError as e:
         print(f"\nERROR: Command failed with exit code {e.returncode}")
         sys.exit(1)
@@ -129,8 +130,16 @@ def main() -> None:
     if dist_folder.exists():
         shutil.rmtree(dist_folder)
 
-    # Nuitka compilation
-    run_command([sys.executable, "-m", "nuitka", "chrome_lens_ocr.py"])
+    # Prepend protobufs folder to PYTHONPATH for Nuitka to resolve absolute imports
+    nuitka_env = os.environ.copy()
+    protobufs_dir = Path("chrome_lens_ocr/utils/protobufs").absolute()
+
+    if "PYTHONPATH" in nuitka_env:
+        nuitka_env["PYTHONPATH"] = f"{protobufs_dir}{os.pathsep}{nuitka_env['PYTHONPATH']}"
+    else:
+        nuitka_env["PYTHONPATH"] = str(protobufs_dir)
+
+    run_command([sys.executable, "-m", "nuitka", "chrome_lens_ocr.py"], env=nuitka_env)
 
     if not dist_folder.is_dir():
         print(f"ERROR: Nuitka failed to create the dist folder: {dist_folder}")

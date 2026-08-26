@@ -16,7 +16,9 @@ logger = logging.getLogger(__name__)
 
 
 class LensRequestHandler:
-    def __init__(self, api_key: str, proxy: Optional[Union[str, dict[str, httpx.AsyncBaseTransport]]] = None, timeout: int = 60, max_retries: int = 3):
+    def __init__(
+        self, api_key: str, proxy: Optional[Union[str, dict[str, httpx.AsyncBaseTransport]]] = None, timeout: int = 60, max_retries: int = 3
+    ):
         self.api_key = api_key
         self.proxy_settings: dict[str, Any] = {}
         self.timeout = timeout
@@ -109,7 +111,11 @@ class LensRequestHandler:
                     continue
                 response_text_content = e_http.response.text
                 logger.error(f"HTTP error: {e_http.response.status_code} - {response_text_content[:500]}", exc_info=True)
-                raise LensAPIError(f"HTTP error: {e_http.response.status_code}", status_code=e_http.response.status_code, response_body=response_text_content) from e_http
+                raise LensAPIError(
+                    f"HTTP error: {e_http.response.status_code}",
+                    status_code=e_http.response.status_code,
+                    response_body=response_text_content,
+                ) from e_http
             except httpx.RequestError as e_req:
                 if attempt <= self.max_retries:
                     logger.warning(f"Connection error: {e_req}. Retrying {attempt}/{self.max_retries}...")

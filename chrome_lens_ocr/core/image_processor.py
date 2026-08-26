@@ -1,8 +1,7 @@
-import asyncio
 import io
 import logging
 import math
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING
 
 import httpx
 from PIL import Image, ImageFile
@@ -28,7 +27,7 @@ async def _get_raw_bytes_from_source(image_source: str) -> bytes:
             async with httpx.AsyncClient(timeout=30) as client:
                 response = await client.get(image_source, follow_redirects=True)
                 response.raise_for_status()
-                return response.content
+                return bytes(response.content)
         except httpx.HTTPStatusError as e:
             raise LensImageError(f"Failed to download image: HTTP {e.response.status_code}") from e
         except httpx.RequestError as e:
